@@ -151,8 +151,12 @@ do_log_impl(Severity, Metadata, Format, Args, SeverityAsInt, LevelThreshold, Tra
                 true ->
                     gen_event:notify(SinkPid, {log, LagerMsg});
                 false ->
-                    ok
-%%                    gen_event:sync_notify(SinkPid, {log, LagerMsg})
+                    case application:get_env(lager, drop_if_sync, false) of
+                        true ->
+                            ok;
+                        false ->
+                            gen_event:sync_notify(SinkPid, {log, LagerMsg})
+                    end
             end,
             case TraceSinkPid /= undefined of
                 true ->

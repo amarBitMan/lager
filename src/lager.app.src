@@ -57,7 +57,8 @@
             %% decrease from `async_threshold' to async_threshold -
             %% async_threshold_window. This value only applies to the
             %% default sink; extra sinks can supply their own.
-            {async_threshold_window, 5}
+            {async_threshold_window, 5},
+            {drop_if_sync, false}
         ]},
   {licenses, ["Apache 2"]},
   {links, [{"Github", "https://github.com/erlang-lager/lager"}]}
