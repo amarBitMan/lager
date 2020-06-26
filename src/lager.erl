@@ -151,23 +151,26 @@ do_log_impl(Severity, Metadata, Format, Args, SeverityAsInt, LevelThreshold, Tra
             end,
             LagerMsg = lager_msg:new(Msg,
                 Severity, Metadata, Destinations),
-            case lager_config:get({Sink, async}, false) of
-                true ->
-                    gen_event:notify(SinkPid, {log, LagerMsg});
-                false ->
-                    case application:get_env(lager, drop_if_sync, false) of
-                        true ->
-                            ok;
-                        false ->
-                            gen_event:sync_notify(SinkPid, {log, LagerMsg})
-                    end
-            end,
+            Resp =
+                case lager_config:get({Sink, async}, false) of
+                    true ->
+                        gen_event:notify(SinkPid, {log, LagerMsg}), async;
+                    false ->
+                        case application:get_env(lager, drop_if_sync, false) of
+                            true ->
+                                ok;
+                            false ->
+                                gen_event:sync_notify(SinkPid, {log, LagerMsg})
+                        end,
+                        sync
+                end,
             case TraceSinkPid /= undefined of
                 true ->
                     gen_event:notify(TraceSinkPid, {log, LagerMsg});
                 false ->
                     ok
-            end;
+            end,
+            Resp;
         false ->
             ok
     end.
