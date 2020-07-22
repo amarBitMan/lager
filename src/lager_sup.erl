@@ -145,27 +145,4 @@ init_metrics() ->
               ]
           }
         ],
-    lists:foreach(fun declare_metric/1, Metrics).
-
-%% TODO: Remove these from here once
-declare_metric({Metric, Spec}) ->
-  declare_metric(Metric, Spec);
-declare_metric({Registry, Metric, Spec}) ->
-  declare_metric(Metric, [{registry, Registry}] ++ Spec).
-
-declare_metric(Metric, Spec) ->
-  Module = type_to_module(Metric),
-  Module:declare(Spec).
-
-type_to_module(counter) ->
-  prometheus_counter;
-type_to_module(gauge) ->
-  prometheus_gauge;
-type_to_module(summary) ->
-  prometheus_summary;
-type_to_module(histogram) ->
-  prometheus_histogram;
-type_to_module(boolean) ->
-  prometheus_boolean;
-type_to_module(Type) ->
-  Type.
+    prometheus_sup:register_metrics(Metrics).
