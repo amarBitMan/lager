@@ -48,6 +48,7 @@
     }).
 
 init([{sink, Sink}, Hwm, Window]) ->
+    prometheus_gauge:set(lager_sync_mode_boolean, [Sink], 0),
     lager_config:set({Sink, async}, true),
     {ok, #state{sink=Sink, hwm=Hwm, window_min=Hwm - Window}}.
 
