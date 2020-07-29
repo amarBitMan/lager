@@ -556,11 +556,7 @@ check_hwm(Shaper = #lager_shaper{lasttime = Last, dropped = Drop}) ->
     end.
 
 log_prometheus_metrics(#lager_shaper{id = ShaperId, hwm = Hwm, mps = Mps, dropped = Drop}) ->
-    prometheus_gauge:set(lager_messages_per_second, [ShaperId], Mps),
-    prometheus_gauge:set(lager_hwm, [ShaperId], Hwm),
-    prometheus_counter:inc(lager_dropped_messages_total, [ShaperId], Drop),
     {_, QueueLength} = process_info(self(), message_queue_len),
-    prometheus_gauge:set(lager_sink_message_queue_length, [ShaperId], QueueLength),
     CounterEvents =
         case erlang:whereis(gr_lager_default_tracer_counters) of
             undefined ->
@@ -569,7 +565,15 @@ log_prometheus_metrics(#lager_shaper{id = ShaperId, hwm = Hwm, mps = Mps, droppe
                 {_, MsgLen} = erlang:process_info(Pid1, message_queue_len),
                 MsgLen
         end,
-    prometheus_gauge:set(goldrush_lager_tracer_message_queue_length, CounterEvents).
+    try 
+        prometheus_gauge:set(lager_messages_per_second, [ShaperId], Mps),
+        prometheus_gauge:set(lager_hwm, [ShaperId], Hwm),
+        prometheus_counter:inc(lager_dropped_messages_total, [ShaperId], Drop), 
+        prometheus_gauge:set(lager_sink_message_queue_length, [ShaperId], QueueLength),
+        prometheus_gauge:set(goldrush_lager_tracer_message_queue_length, CounterEvents)
+    catch error:badarg ->
+        ok
+    end.
 
 should_flush(#lager_shaper{flush_queue = true, flush_threshold = 0}) ->
     true;
