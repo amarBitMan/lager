@@ -153,7 +153,11 @@ do_log_impl(Severity, Metadata, Format, Args, SeverityAsInt, LevelThreshold, Tra
                 false ->
                     case application:get_env(lager, drop_if_sync, false) of
                         true ->
-                            prometheus_counter:inc(lager_dropped_messages_total, [Sink], 1),
+                            try
+                                prometheus_counter:inc(lager_dropped_messages_total, [Sink], 1)
+                            catch error:badarg ->
+                                ok
+                            end,
                             ok;
                         false ->
                             gen_event:sync_notify(SinkPid, {log, LagerMsg})
